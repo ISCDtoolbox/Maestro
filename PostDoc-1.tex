@@ -1,0 +1,128 @@
+% !TEX encoding = UTF-8 Unicode
+\documentclass{article}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage{graphicx, color}
+\usepackage{amssymb, amsmath, amsfonts, amsthm}
+\usepackage{dsfont}
+\usepackage{vmargin}
+
+
+% Writing mode
+%\usepackage{showkeys}
+%\usepackage {pdfsync}
+%\usepackage[active]{srcltx}  %forward search for .dvi
+
+\everymath{\displaystyle}
+
+\usepackage{hyperref}
+\hypersetup{
+%	backref=true,
+%	pagebackref=true,
+%	hyperindex=true,
+	colorlinks=true,
+	breaklinks=true,
+	urlcolor=blue,
+	linkcolor=red,
+%	bookmarks=true,
+	bookmarksopen=true,
+	pdftitle = MAESTRO,
+	pdfauthor = MAESTRO,
+	pdfsubject = MAESTRO,
+	pdfkeywords = {maestro}
+}
+
+\numberwithin{equation}{section} % Numerote les equations en fonction du paragraphe.
+\renewcommand{\thefootnote}{\*}
+
+% Les commandes pour les lettres classiques.
+\newcommand{\R}{\mathbb{R}} % Les nombres reels
+\newcommand{\B}{\mathbf{B}} % Le mouvement Brownien
+\newcommand{\N}{\mathbb{N}} % Les entiers naturels
+\newcommand{\E}{\mathbb{E}} % L'esperance
+\newcommand{\F}{\mathcal{F}} % Les filtrations
+\newcommand{\sL}{\mathrm{L}}
+\newcommand{\sH}{\mathrm{H}}
+\newcommand{\sV}{\mathrm{V}}
+\newcommand{\1}{\mathds{1}} % L'indicatrice
+\newcommand{\dd}{\mathrm{d}} % L'\'el\'ement infinit\'esimal.
+\newcommand{\dds}{\mathrm{d}s}
+\newcommand{\ddt}{\mathrm{d}t}
+\newcommand{\ddtheta}{\mathrm{d\theta}}
+\newcommand{\ddx}{\mathrm{d}x}
+\newcommand{\ddy}{\mathrm{d}y}
+
+\newcommand{\Div}{\mathrm{div\,}} % divergence
+\newcommand{\Prb}{\mathbb{P}} % Proba
+\newcommand{\Tr}{\mathrm{Tr}} % Trace
+\newcommand{\la}{\langle}
+\newcommand{\ra}{\rangle}
+\newcommand{\lp}{\left(}
+\newcommand{\rp}{\right)}
+
+% Proof and examples.
+\newcommand{\Proof}{\noindent {\bf{\underline{Proof} : }}}
+\newcommand{\EProof}{\begin{flushright}$\Box$\end{flushright}}
+\newcommand{\Ex}{\noindent \emph{\underline{Example} : }}
+\newcommand{\Step[1]}{\indent \textbf{Step {#1}.}}
+\newcommand{\EStep[1]}{\begin{flushright}$\Box$\end{flushright}}
+\newcommand{\Case[1]}{\textbf{Case {#1}}}
+
+% Les newtheorem.
+\newtheorem{Th}{Theorem}[section]
+\newtheorem{Def}[Th]{Definition}
+\newtheorem{Coro}[Th]{Corollary}
+\newtheorem{Le}[Th]{Lemma}
+\newtheorem{Prop}[Th]{Proposition}
+\newtheorem{Rem}[Th]{Remark}
+\newtheorem{Hyp}[Th]{Hypothesis}
+
+
+\title{MAESTRO}
+\author{
+Ludovic Gouden\`ege\footnotemark[1] \and
+Pierre Monmarché\footnotemark[2] \and
+Benjamin Rotenberg\footnotemark[3] \and
+Hadrien Vroylandt\footnotemark[4] \and
+Rodolphe Vuilleumier\footnotemark[5]}
+\date{}
+
+\begin{document}
+
+\maketitle
+\renewcommand{\thefootnote}{\*}
+\footnotetext[0]{\!\!\!\!\!\!\!\!\!\!\!AMS 2000 subject classifications.\\
+{\em Key words and phrases} : \\}
+\renewcommand{\thefootnote}{\fnsymbol{footnote}}
+
+\footnotetext[1]{CNRS, FR 3487, Fédération de Mathématiques de CentraleSupélec, CentraleSupélec, 91190 Gif-sur-Yvette, Université Paris-Saclay, France, goudenege@math.cnrs.fr}
+\footnotetext[2]{Sorbonne Université, France, pierre.monmarche@upmc.fr}
+\footnotetext[3]{Sorbonne Université, France, benjamin.rotenberg@sorbonne-universite.fr}
+\footnotetext[4]{Sorbonne Université, France, hadrien@hvroylandt.eu}
+\footnotetext[5]{Sorbonne Université, France, rodolphe.vuilleumier@ens.fr}
+
+
+
+\begin{abstract}
+MAESTRO
+\end{abstract}
+
+\newpage
+
+%%%%%%%%%%%%%%%%%%%%%%%%%
+\section*{Introduction and main results}
+%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\begin{thebibliography}{10}
+
+\bibitem{FPL}
+Fokker, Planck and Langevin. A new equation. Nature, 1 (2020), 03K91L.
+
+\end{thebibliography}
+%\bibliographystyle{abbrv}
+%\bibliography{bibli}
+
+\end{document}
+
