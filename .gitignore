@@ -1,0 +1,7 @@
+# ignore OSX system files
+.DS_Store
+# ignore generated tex files
+.aux
+.log
+.synctex.gz
+.out
