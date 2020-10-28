@@ -1,4 +1,3 @@
-% !TEX encoding = UTF-8 Unicode
 \documentclass{article}
 \usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
@@ -7,8 +6,9 @@
 \usepackage{amssymb, amsmath, amsfonts, amsthm}
 \usepackage{dsfont}
 \usepackage{vmargin}
-
-
+\usepackage{bm}
+\usepackage{ifthen}
+\usepackage{mathrsfs}
 % Writing mode
 %\usepackage{showkeys}
 %\usepackage {pdfsync}
@@ -35,6 +35,57 @@
 
 \numberwithin{equation}{section} % Numerote les equations en fonction du paragraphe.
 \renewcommand{\thefootnote}{\*}
+
+% ********************************************************************
+%                      MATHEMATICAL COMMANDS
+% ********************************************************************
+
+\newcommand{\abs}[1]{\ensuremath{\left| #1 \right|}}
+\newcommand{\norm}[1]{\ensuremath{\left| \left| #1 \right| \right|}}
+\DeclareMathOperator{\im}{Im}
+\DeclareMathOperator{\re}{Re}
+\DeclareMathOperator{\dg}{dg}
+\DeclareMathOperator*{\argmax}{argmax}
+\DeclareMathOperator*{\argmin}{argmin}
+\newcommand{\f}[2]{\mathchoice%
+			{\dfrac{#1}{#2}}
+	    	{\dfrac{#1}{#2}}
+			{\frac{#1}{#2}}
+			{\frac{#1}{#2}}}
+\newcommand{\tf}[2]{\ensuremath{#1/#2}}
+\newcommand{\Sum}[2]{\sum\limits_{#1}^{#2}}
+\newcommand{\ddf}[3][]{\ifthenelse{\equal{#1}{}}{\ensuremath{\f{\dd#2}{\dd#3}}}
+{\ensuremath{\f{\dd^{#1}#2}{\dd{#3}^{#1}}}}}
+\newcommand{\Dp}[3][]{\ifthenelse{\equal{#1}{}}{\ensuremath{\f{\partial#2}{\partial#3}}}
+  {\ensuremath{\f{\partial^{#1}#2}{\partial{#3}^{#1}}}}}
+\newcommand{\vect}[1]{\bm{#1}}
+\newcommand{\Id}{{\textrm Id}}
+
+\renewcommand{\hat}[1]{\ensuremath{\widehat{#1}}}
+\renewcommand{\tilde}[1]{\ensuremath{\widetilde{#1}}}
+\renewcommand{\leq}{\ensuremath{\leqslant}}
+\renewcommand{\geq}{\ensuremath{\geqslant}}
+
+\newcommand{\avg}[1]{\ensuremath{\left\langle #1 \right\rangle}}
+\newcommand{\expec}[1]{\ensuremath{{\rm I\kern-.3em \rm E}\left[#1\right]}}
+\newcommand{\prob}[1]{\ensuremath{\mathbb{P}\left(#1\right)}}
+\newcommand{\Var}[1]{\mbox{Var}(#1)}
+\newcommand{\sprod}[2]{\langle#1,#2\rangle}
+
+\newcommand{\e}[1]{\ensuremath{{}_{\text{#1}}}}
+\newcommand{\h}[1]{\ensuremath{{}^{\text{#1}}}}
+
+\renewcommand{\rm}[1]{\mathrm{#1}}%Pour la compatibilite avec amsmath
+\newcommand{\T}{\rm{T}}
+
+\newcommand{\etal}{\textit{et al}. }
+\newcommand{\ie}{\textit{i}.\textit{e}. }
+\newcommand{\eg}{\textit{e}.\textit{g}. }
+
+\DeclareMathOperator{\diver}{div}
+\DeclareMathOperator{\grad}{\nabla}
+\newcommand{\note}[1]{{\footnotesize \textbf{Note:} #1}}
+
 
 % Les commandes pour les lettres classiques.
 \newcommand{\R}{\mathbb{R}} % Les nombres reels
@@ -85,7 +136,8 @@ Ludovic Gouden\`ege\footnotemark[1] \and
 Pierre Monmarché\footnotemark[2] \and
 Benjamin Rotenberg\footnotemark[3] \and
 Hadrien Vroylandt\footnotemark[4] \and
-Rodolphe Vuilleumier\footnotemark[5]}
+Rodolphe Vuilleumier\footnotemark[5] \and
+Fabio Pietrucci\footnotemark[6] }
 \date{}
 
 \begin{document}
@@ -101,7 +153,7 @@ Rodolphe Vuilleumier\footnotemark[5]}
 \footnotetext[3]{Sorbonne Université, France, benjamin.rotenberg@sorbonne-universite.fr}
 \footnotetext[4]{Sorbonne Université, France, hadrien@hvroylandt.eu}
 \footnotetext[5]{Sorbonne Université, France, rodolphe.vuilleumier@ens.fr}
-
+\footnotetext[6]{Sorbonne Université, France, fabio.pietrucci@sorbonne-universite.fr}
 
 
 \begin{abstract}
@@ -115,6 +167,375 @@ MAESTRO
 %%%%%%%%%%%%%%%%%%%%%%%%%
 
 
+\section{Derivation of the generalized Langevin equation}
+Let's consider a first order differential equation on the state $\vect{X}(t)$
+\begin{equation}
+    \label{eq:operatorEvolution}
+    \dd \vect{X} (t) = \mathcal{L} \vect{X}(t) \ddt
+\end{equation}
+where $\mathcal{L}$ denote the evolution operator, that can be a Liouville operator for Hamiltonian dynamics, or a Markov operator for stochastic dynamics. We assume that we have only a partial view of the system trough a set of observables.
+
+Most common choices of observables are either a subset of coordinates (like the coordinates of a particular particle) or coarse-grained function of the coordinates (like the center of mass of some of the particles).
+
+\subsection{Projection operator}
+%The choice of the projection operator appears to be not so innocent.
+To define projection, we need to introduce a scalar product, we have using equilibrium probability $\rho_{eq}$
+\begin{equation}
+    \label{eq:scalarproduct}
+   \sprod{f}{g} = \int \dd \vect{X} \rho_{eq}(\vect{X}) f^\T(\vect{X}) g(\vect{X})
+\end{equation}
+\paragraph{Orthogonal projection}
+For orthogonal projection onto a set of $m$ basis function $\{b\}$ (we don't really restrict $m$ to be finite or event the family to be countable), we introduce the matrix $B \in \R^{m\times \cdot}$ such that each column of $B$ is a basis function, then the orthogonal projection onto $\{b\}$ applied on a function $F(\vect{X})$ is 
+\begin{equation}
+    \label{eq:ortho_proj}
+    \mathcal{P}_{\{b\}}F = B\cdot\sprod{B}{B}^{-1} \cdot\sprod{B}{F}
+\end{equation}
+
+\paragraph{Oblique projection}
+We can also define an oblique projection\footnote{that is more or less what \cite{Meyer2017} are doing} still using the same matrix $B$ that is a basis for the range of the projector, but we also define the orthogonal complement $D$ to the null space of the projector
+\begin{equation}
+    \label{eq:oblique_proj}
+    \mathcal{P}^o_{\{b\}}F = B\cdot\sprod{D}{B}^{-1} \cdot\sprod{D}{F}
+\end{equation}
+\paragraph{Examples of family basis}
+
+\begin{itemize}
+    \item $\{b\} = \{\mathcal{O}(\vect{X})\}$; we project onto the observable, that is the Mori projection.
+    \item $\{b\} = \{\delta(\alpha - \mathcal{O}(\vect{X}))\}_{\alpha \in \R} = \text{Span}(\delta(\alpha - \mathcal{O}(\vect{X})))$; we project onto the set of function of the observable, that is the Zwanzig projection\footnote{In this case, the family is not countable and the product part of the projector is $\int \dd \alpha $}
+    \item $\{b\} = \{b_k(\mathcal{O}(\vect{X}))\}_{k=1}^{m}$; we project onto a set of basis function $b_k$ of the observable (Hermite polynomial, Legendre polynomial,\ldots)
+    \item $\{b\} = \{\{b_k(\mathcal{O}(\vect{X}))\}_{k=1}^{m}, \{h_j(\vect{X}))\}\}$; we project onto a set of basis function of the observable and linear projection onto a set of hidden variable.
+\end{itemize}
+
+
+\subsection{Mori-Zwanzig formalism}
+Let's denote the projection operator onto the set of basis family as $\mathcal{P}_{\{b\}}$, this operator have several properties
+
+The evolution equation of our observables are given by
+\begin{equation}
+    \label{eq:obs_evol}
+    \Dp{\mathcal{O}(\vect{X},t)}{t} = \mathcal{L} \mathcal{O}(\vect{X},t) = e^{t\mathcal{L}}\mathcal{L} \mathcal{O}(\vect{X},0) = e^{t\mathcal{L}}\mathcal{P}_{\{b\}}\mathcal{L} \mathcal{O}(\vect{X},0)+e^{t\mathcal{L}}(1-\mathcal{P}_{\{b\}})\mathcal{L} \mathcal{O}(\vect{X},0)
+\end{equation}
+We have the operator identity (Duhamel-Dyson)
+\begin{equation}
+    \label{eq:operator_iden}
+    e^{t\mathcal{L}} = e^{t(1-\mathcal{P}_{\{b\}})\mathcal{L}} + \int \dd s e^{(t-s)\mathcal{L}} \mathcal{P}_{\{b\}} \mathcal{L} e^{s(1-\mathcal{P}_{\{b\}})\mathcal{L}}
+\end{equation}
+Both equations can be combined to get
+\begin{align}
+    \label{eq:GLE_general_form}
+     \Dp{\mathcal{O}(\vect{X},t)}{t} =&  e^{t\mathcal{L}}\mathcal{P}_{\{b\}}\mathcal{L} \mathcal{O}(\vect{X},0)+\int \dd s e^{(t-s)\mathcal{L}} \mathcal{P}_{\{b\}} \mathcal{L} e^{s(1-\mathcal{P}_{\{b\}})\mathcal{L}} (1-\mathcal{P}_{\{b\}})\mathcal{L} \mathcal{O}(\vect{X},0)\\
+     &+e^{t(1-\mathcal{P}_{\{b\}})\mathcal{L}}(1-\mathcal{P}_{\{b\}})\mathcal{L} \mathcal{O}(\vect{X},0)\nonumber
+\end{align}
+We define
+\begin{equation}
+    \label{eq:noise_gle}
+    F(\vect{X},t) = e^{t(1-\mathcal{P}_{\{b\}})\mathcal{L}}(1-\mathcal{P}_{\{b\}})\mathcal{L} \mathcal{O}(\vect{X},0)
+\end{equation}
+that allow to simplify a bit the Eq.~\eqref{eq:GLE_general_form}
+\begin{equation}
+    \label{eq:GLE_general_form_noise}
+     \Dp{\mathcal{O}(\vect{X},t)}{t} =  e^{t\mathcal{L}}\mathcal{P}_{\{b\}}\mathcal{L} \mathcal{O}(\vect{X},0)+\int \dd s e^{(t-s)\mathcal{L}} \mathcal{P}_{\{b\}} \mathcal{L} F(\vect{X},s)+
+     F(\vect{X},t)
+\end{equation}
+
+\subsection{Hamiltonian case}
+The global evolution of the system is given by the Hamilton's equations
+\begin{equation}
+    \label{eq:Hamilton}
+    \begin{cases}
+    \dot{\bm{q}}= \bm{M}^{-1} \bm{p} \\
+    \dot{\bm{p}} = -\bm{\nabla} U(\bm{q})
+    \end{cases}
+\end{equation}
+We choose as observable a subset of positions and velocities $\mathcal{O}(\vect{X},t) = (\delta(x-\vect{X}),\delta(p-\vect{X}))$.\footnote{The $x$ part of the projection is exact is the function $p$ is included into the basis}
+
+\begin{equation}
+    \label{eq:GLE_Hamilton}
+    \begin{cases}
+    \dot{x}= M^{-1} \bm{p} \\
+    \dot{\bm{p}} = F_\text{eff}(x) + \int_0^t K(\bm{p}(\tau),t-\tau)  \dd \tau +R(t)
+    \end{cases}
+\end{equation}
+\subsection{Langevin case}
+
+
+
+The main difference with Hamiltonian case is the presence of an extra heat bath on observed variable.
+
+\subsection{Second Fluctuation-Dissipation Theorem}
+
+\section{Short memory and auxiliary variable approach}
+\begin{equation}
+    \label{eq:aux_var_sys}
+    \begin{cases}
+    \dot q &= M^{-1} p \\
+    \dot p &= F(q) - \bm{A}_{ph} \bm{h}  -A_{pp} p + \Sigma_p \xi(t)  \\
+   \dot{\bm{h}} &= -\bm{A}_{hh} \bm{h} - \bm{A}_{hp} p + \bm{\Sigma}_h \bm{W}(t)
+\end{cases}
+\end{equation}
+
+\subsection{Fluctuation-Dissipation Theorem}
+
+\subsection{Equivalence of GLE and extended Markov system}
+
+
+\subsection{Alternative derivation via Markovian approximation}
+Can we use an extended basis directly from the beginning
+
+
+\subsection{Path probability for extended system}
+For the extended system, the transition probability follow from the gaussian nature of the noise
+\paragraph{Transition probability}
+First we discretize evolution of \eqref{eq:parameters} following a ABOBA scheme, \ie position-Verlet instead of velocity-Verlet that would be OBABO.
+
+\textit{A-step} Generator for the A-step is $\mathcal{L}_A = v \grad _x$ leading to propagator
+\begin{equation}
+    \label{eq:propagator_Astep}
+    x_{t+\Delta t} = x_t + \Delta t v_t
+\end{equation}
+
+\textit{B-step} Generator for the B-step is $\mathcal{L}_B = F(x)\cdot \grad_v$ leading to propagator
+\begin{equation}
+    \label{eq:propagator_Bstep}
+    v_{t+\Delta t} = v_t + \Delta t F(x_t)
+\end{equation}
+
+\textit{O-step} Generator for the O-step is $\mathcal{L}_O = - A \grad_{v,z} + A\Delta_{v,z}$ leading to the (exact) propagator
+\begin{equation}
+    \label{eq:propagator_Ostep}
+   \begin{pmatrix} v_{t+\Delta t} \\ z_{t+\Delta t}  \end{pmatrix} = \exp\left[- \Delta t \bm{A} \right]\begin{pmatrix} v_{t} \\ z_{t}  \end{pmatrix} + \bm{S}  \cdot \bm{G} 
+\end{equation}
+where $\bm{G}$ is a vector of gaussian number of mean 0 and variance $1$ and the matrix $\bm{S}$ is obtained trough
+\begin{align}
+    \label{eq:FDT_OStep}
+    \bm{S}\bm{S}^\T &= k_B T \left( \Id - \exp\left[- \Delta t \bm{A} \right]\exp\left[- \Delta t \bm{A}^\T \right]\right) \\
+    &= k_B T \left( \begin{pmatrix} \Id_{vv} - {e^{- \Delta t \bm{A}}}_{vv}{e^{- \Delta t \bm{A}}}_{vv}^\T -{e^{- \Delta t \bm{A}}}_{vz}{e^{- \Delta t \bm{A}}}_{vz}^\T& -{e^{- \Delta t \bm{A}}}_{vv}{e^{- \Delta t \bm{A}}}_{zv}^\T-{e^{- \Delta t \bm{A}}}_{vz}{e^{- \Delta t \bm{A}}}_{zz}^\T  \\
+    - {e^{- \Delta t \bm{A}}}_{zv}{e^{- \Delta t \bm{A}}}_{vv}^\T -{e^{- \Delta t \bm{A}}}_{zz}{e^{- \Delta t \bm{A}}}_{vz}^\T& \Id_{zz} -  {e^{- \Delta t \bm{A}}}_{zz}{e^{- \Delta t \bm{A}}}_{zz}^\T -{e^{- \Delta t \bm{A}}}_{zv}{e^{- \Delta t \bm{A}}}_{zv}^\T\\
+    \end{pmatrix}\right)
+\end{align}
+
+In case of a velocity dependent, we could take instead an Euler-Maruyama step with
+\begin{equation}
+    \label{eq:propagator_Ostep_Euler_Maruyama}
+   \begin{pmatrix} v_{t+\Delta t} \\ z_{t+\Delta t}  \end{pmatrix} = \begin{pmatrix} v_{t} \\ z_{t}  \end{pmatrix}  - \Delta t \bm{A} \begin{pmatrix} v_{t} \\ z_{t}  \end{pmatrix} + \bm{S}_\text{Euler}  \cdot \bm{G} 
+\end{equation}
+with matrix $\bm{S}_\text{Euler}$ now being 
+\begin{align}
+    \label{eq:FDT_OStep_Euler_Maruyama}
+    \bm{S}_\text{Euler}\bm{S}_\text{Euler}^\T &= k_B T \Delta t \bm{A} \bm{A}^\T 
+\end{align}
+
+\textit{ABOBA scheme} This lead to the following scheme for one timestep evolution
+\begin{align}
+    \label{eq:ABOBA_scheme}
+    x_{\tf{1}{2}}& = x_0 + v_0 \tf{\Delta t}{2} & \textrm{(A)}\\
+    v_{\tf{1}{2}}& = v_0 + F(x_{\tf{1}{2}}) \tf{\Delta t}{2} & \textrm{(B)}\\
+    v'_{\tf{1}{2}}& = \exp\left[- \Delta t \bm{A} \right]_{vv}v_{\tf{1}{2}} +\exp\left[- \Delta t \bm{A} \right]_{vz} \bm{z}_{0} +  [\bm{S}  \cdot \bm{G}]_{v} & \textrm{(O)} \\
+    \bm{z}_1& = \exp\left[- \Delta t \bm{A} \right]_{zv}v_{\tf{1}{2}} +\exp\left[- \Delta t \bm{A} \right]_{zz} \bm{z}_{0}   + [\bm{S}  \cdot \bm{G}]_{z} & \textrm{(O)} \\
+    v_1&= v'_{\tf{1}{2}} + F(x_{\tf{1}{2}}) \tf{\Delta t}{2} & \textrm{(B)}\\
+    x_1 &= x_{\tf{1}{2}}+ v_1 \tf{\Delta t}{2}& \textrm{(A)}
+\end{align}
+%\exp\left[- \Delta t \bm{A} \right]_{vv}
+That lead to the final transition as
+\begin{align}
+    \label{eq:ABOBA_transition}
+    \begin{pmatrix}
+    x_1 \\ v_1 \\ z_1
+    \end{pmatrix}=
+    \begin{pmatrix}
+    1 & \f{\Delta t}{2}(1+\exp\left[- \Delta t \bm{A} \right]_{vv}) & \f{\Delta t}{2}\exp\left[- \Delta t \bm{A} \right]_{vz} \\0 & \exp\left[- \Delta t \bm{A} \right]_{vv} & \exp\left[- \Delta t \bm{A} \right]_{vz} \\0 &\exp\left[- \Delta t \bm{A} \right]_{zv}  &\exp\left[- \Delta t \bm{A} \right]_{zz} 
+    \end{pmatrix}
+    \begin{pmatrix}
+    x_0 \\ v_0 \\ z_0
+    \end{pmatrix}\nonumber\\+ 
+    \begin{pmatrix}
+    (1+\exp\left[- \Delta t \bm{A} \right]_{vv})\tf{\Delta t ^2}{4} \\(1+\exp\left[- \Delta t \bm{A} \right]_{vv}) \tf{\Delta t}{2}\\
+    \exp\left[- \Delta t \bm{A} \right]_{zv} \tf{\Delta t}{2}
+    \end{pmatrix} F\left(x_0 + v_0 \f{\Delta t}{2}\right)\\
+    +\begin{pmatrix}
+    0 & \f{\Delta t}{2} \bm{S}_{vv} &  \f{\Delta t}{2} \bm{S}_{vz}\\
+    0 & \bm{S}_{vv} & \bm{S}_{vz} \\
+    0 & \bm{S}_{zv} & \bm{S}_{zz}
+    \end{pmatrix} \cdot
+    \begin{pmatrix}
+    \bm{G}_x\\ \bm{G}_v\\  \bm{G}_z
+    \end{pmatrix}.\nonumber
+\end{align}
+Then we have the gaussian probability transition from $(x_t,v_t,z_t)$ to $(x_{t+\Delta t},v_{t+\Delta t},z_{t+\Delta t})$
+\begin{align}
+    \label{eq:probaTransition}
+   & \prob{(x_{t+\Delta t},v_{t+\Delta t},z_{t+\Delta t} | (x_t,v_t,z_t) } =  \sqrt{(2\pi)^M\det \bm{\Sigma}_{\Theta} }\\ \nonumber& e^{-\f{1}{2}\left[\begin{pmatrix}
+    x_{t+\Delta t} \\ v_{t+\Delta t} \\ z_{t+\Delta t}
+    \end{pmatrix}-\bm{M}_{\Theta}\cdot\begin{pmatrix}
+    x_t \\ v_t \\ z_t
+    \end{pmatrix} - F_{\Theta}\begin{pmatrix}
+    x_t \\ v_t \\ z_t
+    \end{pmatrix} \bm{\Gamma}_{\Theta}\right]^\T\bm{\Sigma}_{\Theta}^{-1}\left[ \begin{pmatrix}
+    x_{t+\Delta t} \\ v_{t+\Delta t} \\ z_{t+\Delta t}
+    \end{pmatrix}-\bm{M}_{\Theta}\cdot\begin{pmatrix}
+    x_t \\ v_t \\ z_t
+    \end{pmatrix} - F_{\Theta}\begin{pmatrix}
+    x_t \\ v_t \\ z_t
+    \end{pmatrix} \bm{\Gamma}_{\Theta}\right]}
+\end{align}
+where we define
+\begin{equation}
+    \label{eq:covariance_trans_gauss}
+   \bm{\Sigma}_{\Theta} = 
+   \begin{pmatrix}
+    0 & \f{\Delta t}{2} \bm{S}_{vv} &  \f{\Delta t}{2} \bm{S}_{vz}\\
+    0 & \bm{S}_{vv} & \bm{S}_{vz} \\
+    0 & \bm{S}_{zv} & \bm{S}_{zz}
+    \end{pmatrix} \cdot \begin{pmatrix}
+    0 & \f{\Delta t}{2} \bm{S}_{vv} &  \f{\Delta t}{2} \bm{S}_{vz}\\
+    0 & \bm{S}_{vv} & \bm{S}_{vz} \\
+    0 & \bm{S}_{zv} & \bm{S}_{zz}
+    \end{pmatrix}^\T
+\end{equation}
+
+\paragraph{Initial probability}
+We assume that the hidden degree of freedom are equilibrated, therefore the initial probability is
+\begin{equation}
+    \label{eq:initProbhidden}
+    \prob{(x_0,v_0,z_0)} = 
+\end{equation}
+
+\paragraph{Complete path probability} Given the Markovian nature of the model, the path probability to observe trajectory $\{(x_t,v_t,z_t) \}_0^T $ is given by
+\begin{equation}
+    \label{eq:pathProbhidden}
+    \prob{\{(x_t,v_t,z_t) \}_0^T } = 
+\end{equation}
+that can be written under the form of an exponential family as
+\begin{equation}
+    \label{eq:pathProbhidden_exp_fam}
+    \prob{\{(x_t,v_t,z_t) \}_0^T } = 
+\end{equation}
+Therefore the log-likelihood of the model is
+\begin{equation}
+    \label{eq:log_likelihood_hidden_model}
+    -\log \mathcal{L}
+\end{equation}
+
+
+\section{Data-driven parametrization of GLE}
+
+\subsection{Computation of memory kernel trough correlation function}
+For reference, see \cite{Kowalik2019}
+
+We start from the GLE
+\begin{equation}
+    \label{eq:GLE_mem}
+        \dot{x}(t)= \bm{v}(t) \\
+    M\dot{v}(t) = F_\text{eff}(x(t)) - \int_0^t K(t-\tau) v(\tau) \dd \tau +R(t)
+\end{equation}
+Since, the correlation between the initial velocity and the noise term is zero, $\avg{v(0) R(t)} = 0$, we get the Volterra equation between velocity correlation and force correlation
+\begin{equation}
+    \label{eq:volterra}
+    \avg{v(0) (M \dot v(t) - F_\text{eff}(x(t)))} = - \int_0^t K(t-\tau) \avg{v(0)v(\tau)} \dd \tau
+\end{equation}
+
+\paragraph{Iterative solution}
+To solve the Volterra equation \eqref{eq:volterra}, we can discretize the integral using trapezoidal rule. Denoting $C_i^{vv} = \avg{v(0)v(i\Delta t)}$, and $C_i^{vf}= \avg{v(0) [M \dot{v} (i\Delta t) - F_\text{eff}(x(i\Delta t))]}$, and $K_i = K(i\Delta t)$, we get
+
+\begin{equation}
+    \label{eq:iterative_volterra}
+    K_i = -\f{2}{\Delta t C_0^{vv}} \left( C_i^{vf} + \f{\Delta t}{2} K_0 C_{i}^{vv} +\sum_{j=1}^{i-1} \Delta t K_j C_{i-j}^{vv} \right)
+\end{equation}
+
+
+\paragraph{Laplace/Fourier transform}
+The Volterra equation \eqref{eq:volterra} can also be solved through Laplace or Fourier transform.
+
+\paragraph{Other approaches}
+We can also transform the equation into a second order Volterra equation.
+
+There exist more involved method to solve the Volterra integral equation, see \href{http://www.math.hkbu.edu.hk/~hbrunner/harbin10/HL1.pdf}{collocation method}
+
+\subsection{Hidden Markov approach}
+
+As the extended system is Markov, it is amendable to maximum likelihood approach. Due to the hidden nature of the auxillary variable, we turn to EM-type algorithm. 
+
+\paragraph{Parametrization of the system}
+We consider the following system of SDE.
+\begin{equation}
+    \label{eq:parameters}
+    \begin{cases}
+    \dot x = M^{-1} p \\
+    \dot p = F(x)+ A_{ph} \bm{h}  -\gamma p + \Sigma_p \xi(t)  \\
+   \dot{\bm{h}} = \bm{A}_{hh} \bm{h}+ \bm{A}_{hp} p + \bm{\Sigma}_h \bm{W}(t)
+\end{cases}
+\end{equation}
+We are given time series of corrected force $ \{\dot p-F(q)\}_0^T$.
+
+The parameters to compute are therefore only the dissipative part of the dynamics and the stochastic part is retrieved through the FDT
+\begin{itemize}
+    \item A parametrization of the mean force over a chosen functionnal basis.
+    \item $A_{ph}$ and $\gamma$
+    \item $\bm{A}_{hh}$ and $ \bm{A}_{hp}$
+\end{itemize}
+
+\paragraph{Sufficient statistics}
+As our complete probabilistic model~\eqref{eq:log_likelihood_hidden_model} is an exponential family, there is a complete set of sufficient statistic $T_1(\{(x_t,v_t,z_t) \}_0^T) $  and $T_2(\{(x_t,v_t,z_t) \}_0^T)$ (Pitman–Koopman–Darmois theorem) given by
+\begin{align}
+    \label{eq:sufficient_stats}
+    T_1(\{(x_t,v_t,z_t) \}_0^T) &=  \expec{\begin{pmatrix}
+    x_{t+\Delta t} \\ v_{t+\Delta t} \\ z_{t+\Delta t}
+    \end{pmatrix}-\begin{pmatrix}
+    x_t \\ v_t \\ z_t
+    \end{pmatrix}\Big| (x,v,z)} \\
+      T_2(\{(x_t,v_t,z_t) \}_0^T) &=  \expec{\left( \begin{pmatrix}
+    x_{t+\Delta t} \\ v_{t+\Delta t} \\ z_{t+\Delta t}
+    \end{pmatrix}-\begin{pmatrix}
+    x_t \\ v_t \\ z_t
+    \end{pmatrix}\right) \left( \begin{pmatrix}
+    x_{t+\Delta t} \\ v_{t+\Delta t} \\ z_{t+\Delta t}
+    \end{pmatrix}-\begin{pmatrix}
+    x_t \\ v_t \\ z_t
+    \end{pmatrix}\right)^\T}  
+\end{align}
+They are associated with natural parameters
+\begin{align}
+    \label{eq:naturals_parameters}
+    \bm{\eta}_1(\bm{\Theta},(x,v,z)) &= \bm{\Sigma}_{\Theta}^{-1}\left( (\bm{M}_{\Theta}-\Id)\cdot\begin{pmatrix}
+    x \\ v \\ z
+    \end{pmatrix} + F_{\Theta}\begin{pmatrix}
+    x \\ v \\ z
+    \end{pmatrix} \bm{\Gamma}_{\Theta}\right) \\
+    \bm{\eta}_2(\bm{\Theta}) &= -\f{1}{2} \bm{\Sigma}_{\Theta}^{-1}
+\end{align}
+and the log-partition function is
+\begin{equation}
+    \label{eq:log-partion-exp-family}
+    f(\Theta,(x,v,z)) = -\f{1}{4} \int \dd (x,v,z) \bm{\eta}_1(\bm{\Theta},(x,v,z))^\T \bm{\eta}_2(\bm{\Theta})^{-1} \bm{\eta}_1(\bm{\Theta},(x,v,z)) -\f{1}{2} \log( -2 \det \bm{\eta}_2(\bm{\Theta}))
+\end{equation}
+
+\paragraph{Expectation step}
+The first step is computing the probability of the hidden variables given the parameters and the observables. That means we need $\prob{ \bm{h}_t | \{y_\tau\}_0^T, \bm{\Theta}_{k-1}}$\footnote{For a multivariate gaussian $p(x_A,x_B)=\mathcal{N}((\mu_A,\mu_B),\Sigma)$,  the conditionnal gaussian is $p(x_A|x_B)= \mathcal{N}(\mu_A+\Sigma_{AB}\Sigma_{BB}^{-1}(x_B-\mu_B),\Sigma_{AA}-\Sigma_{AB}\Sigma_{BB}^{-1}\Sigma_{BA})$}
+
+Once we have $\prob{ \bm{h}_t | \{y_\tau\}_0^T, \bm{\Theta}_{k-1}}$, we can compute the sufficient statistics averaged over this probability distribution
+
+Foward-Backward algorithm
+
+\begin{align}
+    \label{eq:sufficient_stats_avg}
+    T^h_1(\{(x_t,v_t,z_t) \}_0^T) &=  \expec{ T_1(\{(x_t,v_t,z_t) \}_0^T)}_{\bm{h}_t | \{y_\tau\}_0^T, \bm{\Theta}_{k-1}} \\
+      T^h_2(\{(x_t,v_t,z_t) \}_0^T) &=  \expec{ T_2(\{(x_t,v_t,z_t) \}_0^T)}_{\bm{h}_t | \{y_\tau\}_0^T, \bm{\Theta}_{k-1}} 
+\end{align}
+
+\paragraph{Maximisation step}
+
+The derivative of the MLE are given by
+\begin{align}
+
+\end{align}
+
+The maximum likelihood estimators from transition probabilities \eqref{eq:ABOBA_transition} write
+
+
+\paragraph{Stochastic approximation}
+
+Given that we are unable to fully obtain the probability distribution of the hidden variable given the observed variables, we can instead sample the hidden variables and use Robbins–Monro algorithm or Polyak–Ruppert averaging. That is going to lead to the SAEM algorithm.
+
 \begin{thebibliography}{10}
 
 \bibitem{FPL}
@@ -125,4 +546,3 @@ Fokker, Planck and Langevin. A new equation. Nature, 1 (2020), 03K91L.
 %\bibliography{bibli}
 
 \end{document}
-
