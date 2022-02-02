@@ -5,19 +5,19 @@ subroutine input_tom
 !!! *********************************************************************!!!
 
   use md_variables
-  implicit none   
+  implicit none
   integer :: i,j,l,k,ii,jj,ind,ntest
   integer :: myfind_free_unit
   logical :: ifex
   double precision :: dxvar
   character(len=20) :: dummy1,varname1,format_string1
-   
+
 
 ! 'system' is the only namelist the QE does not need
   namelist /system/ potential,kspring,c0_k,c1_k,c2_k,    &
                     nspecies,output_dir,verbose
 
-!!! 'dynamics' should be equal to QE interface                     
+!!! 'dynamics' should be equal to QE interface
   namelist /dynamics/ restart_pimd,nbeadMD,nunitcells,nblocks,nstep_block  &
                      ,iprint,irun   &
                      ,delt,tempMD,gammaMD,sigmacov     &
@@ -25,7 +25,10 @@ subroutine input_tom
                      ,delta0,delta0k,delta0q,yessecond         &
                      ,yesturboq,yesglobal
 
-!!! 'cell_and_atoms' should be equal to QE interface                     
+!!! 'renyi' was added by Miha Srdinsek
+  namelist /renyi/ renyi_order, renyi_lam_s, renyi_lam_j
+
+!!! 'cell_and_atoms' should be equal to QE interface
   namelist /cell_and_atoms/ natoms,ndimMD,ncellsx,ncellsy,ncellsz &
                             ,ibrav,avec,numqsymmpoints !!.....amas(in fondo),qsymmpoints(in fondo)
 
@@ -33,7 +36,7 @@ subroutine input_tom
   read(223,*) output_dir
   lonl=index(output_dir,' ')-1
   close(223)
-  
+
   open(222,file=output_dir(1:lonl)//'/prefix.input',status='old',form='formatted')
 
   write(*,'(''            *** PIL Program ***                 '' )')
@@ -48,10 +51,10 @@ subroutine input_tom
   inquire(file=output_dir(1:lonl)//'/'//filen(1:lfnl)//'.in',exist=ifex)
   if(ifex) then
      open(1,file=output_dir(1:lonl)//'/'//filen(1:lfnl)//'.in',status='old',form='formatted')
-  else 
+  else
      stop ' input file does not exist '
   endif
-   
+
 
 !    ***   System parameters    ***
 
@@ -70,9 +73,9 @@ subroutine input_tom
   verbose=.false.
   natoms=1
   ndimMD=3
-  
+
 ! Namelist 'system' call
-  read(1,nml=system) 
+  read(1,nml=system)
 
 ! Controlling 'system' parameters and stop if they are not correct
   if(nspecies .eq. 0) then
@@ -86,10 +89,10 @@ subroutine input_tom
     write(*,*) 'we are working with a 1d chain coupled by the harmonic constant', kspring
   elseif(trim(potential) .eq. 'harmonic_chain2p_1d') then
     write(*,*) 'we are working with a 2particles- 1d chain coupled by the harmonic constant', kspring
-  elseif(trim(potential) .eq. 'harmonic_1d') then 
+  elseif(trim(potential) .eq. 'harmonic_1d') then
     write(6,*) 'we are working with the harmonic potential'
     write(6,*) 'harmonic constant =',kspring
-  elseif(trim(potential) .eq. 'coupled_harmonic_1d') then 
+  elseif(trim(potential) .eq. 'coupled_harmonic_1d') then
     write(6,*) 'we are working with two coupled harmonic oscillators in 1d'
     write(6,*) 'harmonic constant =',kspring
   elseif(trim(potential) .eq. 'coupled_harmonic_2d') then
@@ -100,8 +103,8 @@ subroutine input_tom
   elseif(trim(potential) .eq. 'coupled_sdw_qu_xy2_2d') then
     write(6,*) 'we are working with a symmetric double well couple dwith a quartic oscillator'
   elseif(trim(potential) .eq. 'coupled_sdw_qu_xy3_2d') then
-    write(6,*) 'we are working with a symmetric double well couple dwith a quartic oscillator'      
-  elseif(trim(potential) .eq. 'symmetric_double_well_1d') then 
+    write(6,*) 'we are working with a symmetric double well couple dwith a quartic oscillator'
+  elseif(trim(potential) .eq. 'symmetric_double_well_1d') then
     write(6,*) 'we are working with the double well potential'
   elseif(trim(potential) .eq. 'morse_1d') then
     write(6,*) 'we are working with the Morse potential'
@@ -109,7 +112,7 @@ subroutine input_tom
     write(6,*) 'we are working with the quartic potential'
   elseif(trim(potential) .eq. 'quartic_plus_harmonic_1d') then
     write(6,*) 'we are working with a general potential'
-  elseif(trim(potential) .eq. 'asymmetric_double_well_1d') then 
+  elseif(trim(potential) .eq. 'asymmetric_double_well_1d') then
     write(6,*) 'we are working with the asymmetric double well potential'
   else
     write(6,*) 'error in the choice of the potential!!!'
@@ -134,7 +137,7 @@ subroutine input_tom
   yessecond = .true.
   yesturboq = .true.
   yesglobal = .false. ! PILE_L is the default thermostat for irun=3
-  delta_force = 1.d-4       
+  delta_force = 1.d-4
   delta_harm = 5.d-3
   nunitcells=1
   nblocks=10
@@ -147,63 +150,69 @@ subroutine input_tom
   ncellsx=1
   ncellsy=1
   ncellsz=1
-  
-  
+  ! Variables added by Miha Srdinsek
+  renyi_order=2
+  renyi_lam_s=0
+  renyi_lam_j=1
+
+
   read(1,nml=dynamics)
+  ! renyi added by Miha Srdinsek
+  read(1,nml=renyi)
   read(1,nml=cell_and_atoms)
-  
+
   avecsp(:,1)=avec(:,1)*dble(ncellsx)
   avecsp(:,2)=avec(:,2)*dble(ncellsy)
   avecsp(:,3)=avec(:,3)*dble(ncellsz)
-  
+
   n=natoms
   write(6,*) 'total number of particles in the system =',n
 
   allocate(amas(n))
   allocate(ion_name(n))
-  
+
   read(1,*)
   do i=1,n/nunitcells
     read(1,*) amas(i),ion_name(i)
   enddo
-  
-  
+
+
   ii=0
   do i=n/nunitcells+1,n
-    ii=ii+1  
+    ii=ii+1
     amas(i)=amas(ii)
     ion_name(i)=ion_name(ii)
     if(ii.eq.n/nunitcells)ii=0
   end do
 
-  if(irun .eq. 0) then   
+  if(irun .eq. 0) then
     nbeadMD=1
     PS=0.5 ! set initial value for NH
     !!!!!!!!!!!!!!!!!!!!!!!!!! q now is set in the input file
-  endif 
-  
-  if(nbeadMD .eq. 1) then  
+  endif
+
+  if(nbeadMD .eq. 1) then
     yesquantum=.false.
-    yesturboq=.false.   
+    yesturboq=.false.
   else
     yesquantum=.true.
   endif
 
   if(fixcm) verbose=.true.
 
- 
-  
+
+
 !    ** write input data **
-  if(fixcm) then 
+  if(fixcm) then
     gMD=ndimMD*(n-1)      !   # degrees of freedom
-  else 
+  else
     gMD=ndimMD*n
   endif
   tempMD=tempMD/kbm1
   tfakeMD=tempMD*nbeadMD
   sigmavar=sigmacov*sigmacov
-       
-       
+
+
   write(*,'('' number of particles       '',i10   )') n
   do i=1,n
     write(*,'('' masses of particles        '',f10.4 )') amas(i)
@@ -231,37 +240,38 @@ subroutine input_tom
   write(*,*)
 
 ! Allocation of variables
+! Multiplied by renyi_order by Miha Srdinsek
   allocate(indx(n))
-  allocate(el(ndimMD,nbeadMD))
-  allocate(rpos(ndimMD,n,nbeadMD))
-  allocate(rpos_init(ndimMD,n,nbeadMD))
-  allocate(forceMD(ndimMD,n,nbeadMD))
-  allocate(forcedyn(ndimMD*n,nbeadMD))
-  allocate(vel(ndimMD,n,nbeadMD))
-  allocate(velocity(3,ndimMD*n,nbeadMD))
-  allocate(pimp(ndimMD,n,nbeadMD))
+  allocate(el(ndimMD,nbeadMD * renyi_order))
+  allocate(rpos(ndimMD,n,nbeadMD * renyi_order))
+  allocate(rpos_init(ndimMD,n,nbeadMD * renyi_order))
+  allocate(forceMD(ndimMD,n,nbeadMD * renyi_order))
+  allocate(forcedyn(ndimMD*n,nbeadMD * renyi_order))
+  allocate(vel(ndimMD,n,nbeadMD * renyi_order))
+  allocate(velocity(3,ndimMD*n,nbeadMD * renyi_order))
+  allocate(pimp(ndimMD,n,nbeadMD * renyi_order))
   allocate(rtilde(n,ndimMD))
-  allocate(vcm(ndimMD,nbeadMD))
-  allocate(rcm(ndimMD,nbeadMD))
-  
-  
-  if(sigmacov .ne. 0.d0) then 
+  allocate(vcm(ndimMD,nbeadMD * renyi_order))
+  allocate(rcm(ndimMD,nbeadMD * renyi_order))
+
+
+  if(sigmacov .ne. 0.d0) then
     allocate(dynmat(n*ndimMD,n*ndimMD))
     allocate(dynmat_eig(n*ndimMD),dynmatforce_eig(n*ndimMD))
-  endif 
+  endif
 
 
 ! set indexes of the different atoms for interactions
   do i=1,n
-    indx(i)=i 
+    indx(i)=i
   enddo
-        
+
 
 ! set the total mass of the zundel ion
   mtot=0.d0
   do i=1,n
     mtot=mtot+amas(indx(i))
-  enddo 
+  enddo
 
 !    ** read initial configuration **
   if (potential .eq. 'zundel') then
@@ -273,17 +283,17 @@ subroutine input_tom
     PS=0.d0
     ifl=0
   else if(potential .eq. 'harmonic_chain1p_1d') then
-    if(n.lt.10) then          
+    if(n.lt.10) then
         format_string1 = "(I1)"
-    else if (n.gt.9 .and. n.lt.100) then     
+    else if (n.gt.9 .and. n.lt.100) then
         format_string1 = "(I2)"
     else
-        format_string1 = "(I3)"  
+        format_string1 = "(I3)"
     endif
     write (varname1,format_string1) n
 
     dxvar=avecsp(1,1)/dble(n)
-    if(.not.restart_pimd) then 
+    if(.not.restart_pimd) then
       open(89,file='input_files_dir/configinit_chain1p'//trim(varname1)//'.xyz',status='replace')
       write(89,*) n
       write(89,*) avecsp(1,1),avecsp(2,2),avecsp(3,3)
@@ -303,7 +313,7 @@ subroutine input_tom
 
       rpos_init=rpos
       call setvel(0)
-    
+
       S=0.d0
       PS=0.d0
     end if
@@ -354,7 +364,7 @@ subroutine input_tom
 
 
   if(.not.restart_pimd) then
-     
+
      unit_dot_out  = myfind_free_unit()
      open(unit_dot_out,file=output_dir(1:lonl)//'/pimd.out',form='formatted')
      unit_dot_ep   = myfind_free_unit()
@@ -367,7 +377,7 @@ subroutine input_tom
      open(unit_dot_eplr,file=output_dir(1:lonl)//'/pimd.eplr',form='formatted')
      unit_dot_ek   = myfind_free_unit()
      open(unit_dot_ek,file=output_dir(1:lonl)//'/pimd.ek',form='formatted')
-  
+
      write(unit_dot_out,'('' number of blocks          '',i10   )') nblocks
      write(unit_dot_out,'('' number of per block       '',i10   )') nstep_block
      write(unit_dot_out,'('' output frequency          '',i10   )') iprint
@@ -376,7 +386,7 @@ subroutine input_tom
      write(unit_dot_out,'('' Maximum single part. disp.'',f10.6 )') delt
 
      write(unit_dot_out,*)
-     
+
      if(irun == 0) then
        write(unit_dot_out,*) 'Classical MD with Nosé-Hoover thermostat'
      elseif(irun == 3) then
@@ -387,9 +397,9 @@ subroutine input_tom
        write(unit_dot_out,*) ' type of run unknown: irun = ',irun
        stop
      endif
-     write(unit_dot_out,*)  
+     write(unit_dot_out,*)
      flush(unit_dot_out)
-  
+
      unit_dot_xyz  = myfind_free_unit()
      open(unit_dot_xyz,file=output_dir(1:lonl)//'/pimd.xyz',form='formatted')
      unit_dot_positions   = myfind_free_unit()
@@ -417,9 +427,9 @@ subroutine input_tom
      rewind(unit_dot_forces_cen)
      rewind(unit_dot_localtemp)
      rewind(unit_dot_sigma)
-  
+
   else
-     
+
      unit_dot_out  = myfind_free_unit()
      open(unit_dot_out,file=output_dir(1:lonl)//'/pimd.out',position='APPEND',form='formatted')
      unit_dot_ep  = myfind_free_unit()
@@ -434,16 +444,16 @@ subroutine input_tom
      open(unit_dot_ek,file=output_dir(1:lonl)//'/pimd.ek',position='APPEND',form='formatted')
      unit_dot_xyz  = myfind_free_unit()
      open(unit_dot_xyz,file=output_dir(1:lonl)//'/pimd.xyz',position='APPEND',form='formatted')
-     
+
      unit_dot_positions  = myfind_free_unit()
      open(unit_dot_positions,file=output_dir(1:lonl)//'/positions.dat',form='formatted') !!! not append because I need to read last pos
      unit_dot_velocities  = myfind_free_unit()
      open(unit_dot_velocities,file=output_dir(1:lonl)//'/velocities.dat',form='formatted') !!! same as pos
 
      unit_dot_positions_cen  = myfind_free_unit()
-     open(unit_dot_positions_cen,file=output_dir(1:lonl)//'/positions_cen.dat',position='APPEND',form='formatted')      
+     open(unit_dot_positions_cen,file=output_dir(1:lonl)//'/positions_cen.dat',position='APPEND',form='formatted')
      unit_dot_velocities_cen  = myfind_free_unit()
-     open(unit_dot_velocities_cen,file=output_dir(1:lonl)//'/velocities_cen.dat',position='APPEND',form='formatted') 
+     open(unit_dot_velocities_cen,file=output_dir(1:lonl)//'/velocities_cen.dat',position='APPEND',form='formatted')
      unit_dot_forces  = myfind_free_unit()
      open(unit_dot_forces,file=output_dir(1:lonl)//'/forces.dat',position='APPEND',form='formatted')
      unit_dot_forces_cen  = myfind_free_unit()
@@ -452,12 +462,13 @@ subroutine input_tom
      open(unit_dot_localtemp,file=output_dir(1:lonl)//'/local_temp.dat',position='APPEND',form='formatted')
      unit_dot_sigma  = myfind_free_unit()
      open(unit_dot_sigma,file=output_dir(1:lonl)//'/sigma.dat',position='APPEND',form='formatted')
-      
+
   endif
-  
+
   if (restart_pimd) call pimd_restart_traj()
 
-  do k=1,nbeadMD
+! Multiplied by renyi_order by Miha Srdinsek
+  do k=1,(nbeadMD * renyi_order)
     do i=1,n
       ind=indx(i)
       do l=1,ndimMD
@@ -504,15 +515,15 @@ END FUNCTION myfind_free_unit
 
 
 subroutine pimd_restart_traj()
- 
+
  ! use path_input_parameters_module, only : pos
   use md_variables, only : rpos,rpos_init,vel,nbeadMD,natoms,ndimMD,output_dir,lonl
   use md_variables, only : unit_dot_positions, unit_dot_velocities
-  
+
   implicit none
   integer cc,k,iat,i,iflagerr,ngen
   real(8), allocatable :: vec_tmp(:)
-  
+
   allocate(vec_tmp(natoms*ndimMD))
 
   !count the number of total available snapshots
@@ -525,12 +536,12 @@ subroutine pimd_restart_traj()
     ngen=ngen+1
   enddo
   rewind(unit_dot_positions)
-  
+
   do i=1,ngen-nbeadMD
     READ(unit_dot_positions,*)
     READ(unit_dot_velocities,*)
   end do
-  
+
   rpos=0.0
   do k=1,nbeadMD
     vec_tmp=0.0
@@ -557,15 +568,15 @@ subroutine pimd_restart_traj()
       END DO
     END DO
   end do
-  
+
   close(unit_dot_positions)
   close(unit_dot_velocities)
   open(unit_dot_positions,file=output_dir(1:lonl)//'/positions.dat',position='APPEND',form='formatted')
   open(unit_dot_velocities,file=output_dir(1:lonl)//'/velocities.dat',position='APPEND',form='formatted')
-  
+
 
   deallocate (vec_tmp)
 
-  
+
   return
 end subroutine pimd_restart_traj
