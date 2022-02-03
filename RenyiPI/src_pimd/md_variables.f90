@@ -1,5 +1,5 @@
 module md_variables
- 
+
       implicit none
 
        INTEGER  :: &
@@ -18,27 +18,27 @@ module md_variables
        unit_dot_localtemp,  &
        unit_dot_sigma,      &
        unit_dot_out
-       
+
        LOGICAL :: restart_pimd
-! Parameters     
+! Parameters
        integer,parameter :: nmax=7,mtmax=3001,ngofrtb=200
        integer,parameter :: maxnab=500,maxm=14,mav=2000+nmax,mtypes=2
-       
+
        real(8), parameter :: pi=3.14159265358979d0, kbm1=315775.024d0  ! in K/Ha units
-       real(8), parameter :: eps_cov = 1.d-10   ! cut off of lower eigenvalues for the inversion of the covariance matrix 
+       real(8), parameter :: eps_cov = 1.d-10   ! cut off of lower eigenvalues for the inversion of the covariance matrix
        double precision, parameter :: hbar2pi=4.135667516d0,a0=0.529177d0
        double precision, parameter :: ev2cm1=8065.543937d0
        double precision, parameter :: ha2cm1 = 219474.63137d0
        double precision, parameter :: timeau2fs = 0.0241888432658d0
-       
-! Variables 
+
+! Variables
 
        integer :: natoms,ndimMD,nblocks,nstep,iprint,iratio,n,nspecies,gMD,nbeadMD
        integer :: nstep_block, numqsymmpoints
        integer :: itarget,irun,lfnl,lonl,lonll,ntmax,ifl,nav,icl,ikin,nunitcells,ibrav
        integer, dimension (:), allocatable :: igr,ipot,partner,indx
        integer :: ncellsx,ncellsy,ncellsz
-       
+
        real(8) :: avec(3,3),avecsp(3,3)
        real(8) :: dens,rcut,rg,rlist,rmin,tempMD,drmax,delta_harm,delta_force
        real(8) :: vol,S,PS,Q,delt,sint,mtot,gammaMD,sig1,sigmacov,sigmavar
@@ -51,13 +51,17 @@ module md_variables
        real(8), dimension (:,:), allocatable :: el,rtilde,fnoiseMD,rcentroid,rcentroidtilde,forcedyn
        real(8), dimension (:,:,:), allocatable :: rpos,rpos_init,forceMD,vel,pimp,etaMD,nuMD,velocity
        real(8), dimension (:,:,:), allocatable :: rtilde_mode, ptilde,forceMD_old,rpos_old
-     
+
        logical :: nh,fixcm,verbose,yesglobal
        character(len=50) :: filen,potential  !!filen is the name of the system
        character(len=150) :: output_dir, output_directory,pot_type
        character(len=2), dimension(:), allocatable :: ion_name
 
-! Myreweight and former TurboRVB variables 
+! Variables added by Miha Srdinsek
+       integer :: renyi_order
+       real(8) :: renyi_lam_s, renyi_lam_j
+
+! Myreweight and former TurboRVB variables
 
        integer :: ieskin,iflagerr,info,nbead,nion
        integer :: iscramax,rank
